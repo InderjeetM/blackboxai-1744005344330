@@ -1,0 +1,37 @@
+/* Custom styles to complement Tailwind */
+body {
+    min-height: 100vh;
+}
+
+.upload-area {
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.upload-area:hover {
+    border-color: #818cf8;
+    background-color: #f8fafc;
+}
+
+#faceImage, #clothingImage {
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+/* Loading spinner */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
