@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Style Recommendations | StyleGenius</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="font-poppins bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-2">Your Style Recommendations</h1>
+            <a href="index.html" class="text-indigo-500 hover:text-indigo-700">
+                <i class="fas fa-arrow-left mr-1"></i> Back to upload
+            </a>
+        </header>
+
+        <div id="outfitsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Outfit cards will be inserted here by JavaScript -->
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const outfitsContainer = document.getElementById('outfitsContainer');
+                const combinations = JSON.parse(localStorage.getItem('outfitCombinations')) || [];
+                
+                if (combinations.length === 0) {
+                    outfitsContainer.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-tshirt text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">No outfit combinations found. Please go back and generate some.</p>
+                            <a href="index.html" class="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                                Generate Outfits
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                combinations.forEach((outfit, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-105 transition duration-300';
+                    
+                    card.innerHTML = `
+                        <div class="relative">
+                            <img src="${outfit.image}" class="w-full h-64 object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                                <h2 class="text-white font-semibold">Outfit Combination #${index + 1}</h2>
+                                <div class="flex mt-2">
+                                    ${outfit.colors.map(color => `
+                                        <div class="w-6 h-6 rounded-full mr-2 border border-gray-200" style="background-color: ${color}"></div>
+                                    `).join('')}
+                                </div>
+                                <p class="text-gray-300 mt-2 text-sm">
+                                    ${outfit.accessories.map(acc => acc.name).join(', ')}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-4 flex justify-between items-center">
+                            <button class="text-indigo-600 hover:text-indigo-800" 
+                                    onclick="saveOutfit(${index})">
+                                <i class="fas fa-heart mr-1"></i> Save
+                            </button>
+                            <span class="text-xs text-gray-500">Click to save</span>
+                        </div>
+                    `;
+                    
+                    outfitsContainer.appendChild(card);
+                });
+            });
+
+            function saveOutfit(index) {
+                const combinations = JSON.parse(localStorage.getItem('outfitCombinations')) || [];
+                const savedOutfits = JSON.parse(localStorage.getItem('savedOutfits')) || [];
+                savedOutfits.push(combinations[index]);
+                localStorage.setItem('savedOutfits', JSON.stringify(savedOutfits));
+                
+                // Show feedback
+                const feedback = document.createElement('div');
+                feedback.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg';
+                feedback.innerHTML = '<i class="fas fa-check mr-2"></i> Outfit saved to your collection!';
+                document.body.appendChild(feedback);
+                
+                setTimeout(() => {
+                    feedback.remove();
+                }, 3000);
+            }
+        </script>
+    </div>
+</body>
+</html>
