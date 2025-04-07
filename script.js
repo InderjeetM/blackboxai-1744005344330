@@ -10,21 +10,52 @@ const clothingPreview = document.getElementById('clothingPreview');
 const faceImage = document.getElementById('faceImage');
 const clothingImage = document.getElementById('clothingImage');
 const generateBtn = document.getElementById('generateBtn');
+const faceSelect = document.getElementById('faceSelect');
+const dressSelect = document.getElementById('dressSelect');
 
-// Event Listeners
-faceUpload.addEventListener('change', (e) => handleImageUpload(e, facePreview, faceImage));
-clothingUpload.addEventListener('change', (e) => handleImageUpload(e, clothingPreview, clothingImage));
-
-// Check if both images are uploaded to enable generate button
-function checkUploads() {
-    if (faceImage.src && clothingImage.src) {
-        generateBtn.disabled = false;
-    } else {
-        generateBtn.disabled = true;
+// Load images from virtual folders
+async function loadFolderImages(folderPath) {
+    try {
+        const response = await fetch(`/api/list-folder?folder=${folderPath}`);
+        const { files } = await response.json();
+        return files.map(file => `/virtual_folders/${folderPath}/${file}`);
+    } catch (error) {
+        console.error(`Error loading ${folderPath} images:`, error);
+        return [];
     }
 }
 
-// Handle image upload and preview
+// Initialize select dropdowns
+async function initSelectors() {
+    const faces = await loadFolderImages('client_faces');
+    const dresses = await loadFolderImages('dress_images');
+
+    faces.forEach(face => {
+        const option = document.createElement('option');
+        option.value = face;
+        option.textContent = face.split('/').pop();
+        faceSelect.appendChild(option);
+    });
+
+    dresses.forEach(dress => {
+        const option = document.createElement('option');
+        option.value = dress;
+        option.textContent = dress.split('/').pop();
+        dressSelect.appendChild(option);
+    });
+}
+
+// Handle image selection from dropdown
+function handleImageSelect(selectElement, previewElement, imageElement) {
+    const imageUrl = selectElement.value;
+    if (imageUrl) {
+        imageElement.src = imageUrl;
+        previewElement.classList.remove('hidden');
+        checkUploads();
+    }
+}
+
+// Original upload handler remains as fallback
 function handleImageUpload(event, previewElement, imageElement) {
     const file = event.target.files[0];
     if (file) {
@@ -38,25 +69,39 @@ function handleImageUpload(event, previewElement, imageElement) {
     }
 }
 
-// Generate button click handler
+// Check if both images are selected
+function checkUploads() {
+    if ((faceImage.src || faceSelect.value) && (clothingImage.src || dressSelect.value)) {
+        generateBtn.disabled = false;
+    } else {
+        generateBtn.disabled = true;
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initSelectors();
+    
+    faceSelect.addEventListener('change', () => handleImageSelect(faceSelect, facePreview, faceImage));
+    dressSelect.addEventListener('change', () => handleImageSelect(dressSelect, clothingPreview, clothingImage));
+    
+    faceUpload.addEventListener('change', (e) => handleImageUpload(e, facePreview, faceImage));
+    clothingUpload.addEventListener('change', (e) => handleImageUpload(e, clothingPreview, clothingImage));
+});
+
+// Generate button click handler (same as before)
 generateBtn.addEventListener('click', async () => {
     generateBtn.innerHTML = `<span class="spinner"></span> Processing...`;
     generateBtn.disabled = true;
     
     try {
-        // Load model if not already loaded
-        if (!model) {
-            model = await tf.loadGraphModel('https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1');
-        }
-
-        // Process images using API
+        const faceSrc = faceSelect.value || faceImage.src;
+        const clothingSrc = dressSelect.value || clothingImage.src;
+        
         const { generateCombinations } = require('./api');
-        const combinations = await generateCombinations(faceImage.src, clothingImage.src);
+        const combinations = await generateCombinations(faceSrc, clothingSrc);
         
-        // Store results temporarily
         localStorage.setItem('outfitCombinations', JSON.stringify(combinations));
-        
-        // Redirect to results page
         window.location.href = 'results.html';
     } catch (error) {
         console.error('Error generating outfits:', error);
